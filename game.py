@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.widgets import Slider
 from matplotlib.patches import Polygon
+from copy import copy
 
 import sys
 sys.path.append('../bounce_viz/src/')
@@ -10,13 +11,13 @@ from simple_polygon import Simple_Polygon
 from maps import small_square
 
 TWOPI = 2*np.pi
-EPSILON = 0.0001
+EPSILON = 0.001
 
 class Game(object):
 
-    def __init__(self, environment):
+    def __init__(self, env):
 
-        self.environment = environment
+        self.env = env
         self.fig, self.ax = plt.subplots()
 
         self.t = np.arange(0.0, TWOPI, 0.001)
@@ -44,26 +45,31 @@ class Game(object):
 
         return patches
 
-    def draw_trajectory(self, start, k):
-        outer_map, holes_map = self.environment.compute_unit_interval_mapping()
-        pts = env.complete_vertex_list
-        n = env.size
-        if start < 0.0 or start > 1.0:
+    def s_to_point(self, s):
+        outer_map, holes_map = self.env.compute_unit_interval_mapping()
+        pts = self.env.complete_vertex_list
+        n = self.env.size
+        if s < 0.0 or s > 1.0:
             raise ValueError("Start position must be on polygon")
         else:
-            #print(outer_map)
-            startv = outer_map[0]
-            i = 0
-            while startv < start:
-                i += 1
-                startv = outer_map[i]
-            print(pts[(i-1)%n])
-            print((start-outer_map[(i-1)%n]))
-            print(pts[i%n]-pts[(i-1)%n])
-            start = pts[(i-1)%n]+(start-outer_map[(i-1)%n])*(pts[i]-pts[(i-1)%n])
-            print(pts)
-            print(start)
+            sv = 0.
+            j = 0
+            for i in range(n):
+                sv = outer_map[i]
+                j = copy(i)
+                if sv > s:
+                    break
+                elif i == n-1:
+                    j = n
+                    break
+                elif abs(s - sv) < EPSILON:
+                    break
 
+            s_on_edge = (s-outer_map[(j-1)])/(outer_map[j]-outer_map[(j-1)])
+            s_pt = pts[j-1] + s_on_edge*(pts[j%n]-pts[j-1])
+            return s_pt
+
+    def draw_bounces(self, traj):
         return
 
     def update(self, val):
@@ -71,7 +77,7 @@ class Game(object):
         amp = self.samp.val
         # update curve
         self.l.set_ydata(amp*np.sin(self.t))
-        polys = self.draw_poly(self.environment)
+        polys = self.draw_poly(self.env)
         # redraw canvas while idle
         self.fig.canvas.draw_idle()
 
@@ -88,6 +94,8 @@ if __name__ == '__main__':
     env = Simple_Polygon("env", small_square[0], small_square[1:])
 
     g = Game(env)
-    g.draw_trajectory(0.5, 5)
+    print(g.s_to_point(0.2))
+    print(g.s_to_point(0.5))
+    print(g.s_to_point(0.99))
     #g.run()
 
