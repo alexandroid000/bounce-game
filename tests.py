@@ -24,9 +24,12 @@ class TestExamples(unittest.TestCase):
 
     def test_bounce(self):
 
-        t1 = self.g.s_to_point(0.2)
-        t2 = self.g.s_to_point(0.5)
-        t3 = self.g.s_to_point(0.999)
+        t1, i1 = self.g.s_to_point(0.2)
+        t2, i2 = self.g.s_to_point(0.5)
+        t3, i3 = self.g.s_to_point(0.999)
+
+        self.assertEqual(i1, 0)
+        self.assertEqual(i3, 3)
 
         p1 = np.array([0.8, 0.])
         p2 = np.array([1., 1.])
