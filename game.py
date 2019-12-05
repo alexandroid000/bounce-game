@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.widgets import Slider
-from matplotlib.patches import Polygon, Circle
+from matplotlib.patches import Polygon, Circle, FancyArrowPatch
 from copy import copy
 
 import sys
@@ -97,7 +97,7 @@ class Game(object):
     def do_bounce(self, pt, edge_i, theta):
         global_theta = self.fixed_brule(theta, edge_i)
         state = (pt[0], pt[1], global_theta)
-        ret = ClosestPtFromPt(state, self.env, last_bounce_edge=-1)
+        ret = ClosestPtFromPt(state, self.env, last_bounce_edge=edge_i)
         if ret:
             bounce_point, bounce_edge = ret
             return bounce_point, bounce_edge
@@ -121,17 +121,20 @@ class Game(object):
         bounces = zip(traj, traj[1:])
 
         for (pt1, pt2) in bounces:
-            arrow = plt.arrow(pt1[0], pt1[1], pt2[0], pt2[1])
+            a = FancyArrowPatch(posA = pt1, posB = pt2, arrowstyle="->")
+            self.ax.add_patch(a)
 
     def update(self, val):
         # amp is the current value of the slider
         s = self.samp.val
         start_pt, j = self.s_to_point(s)
-        theta = 0.2
-        n = 2
-        #bounces = self.make_trajectory(s, theta, n)
+        theta = 1.2
+        n = 20
+        bounces = self.make_trajectory(s, theta, n)
 
-        self.draw_bounces([start_pt])
+        [p.remove() for p in reversed(self.ax.patches[2:])]
+
+        self.draw_bounces(bounces)
         # redraw canvas while idle
         self.fig.canvas.draw_idle()
 
@@ -144,9 +147,8 @@ class Game(object):
 
 if __name__ == '__main__':
 
-    N = 2
 
-    env = Simple_Polygon("env", bigpoly[0], bigpoly[1:])
+    env = Simple_Polygon("env", poly1[0], poly1[1:])
 
     g = Game(env)
     g.run()
