@@ -40,3 +40,11 @@ class TestExamples(unittest.TestCase):
 
 
         #self.assertSequenceEqual(decode_policy(encode_policy(test1)), test1)
+        #
+    def test_fix_angle(self):
+        t1 = fix_angle(-0.2)
+        t1true = 2*np.pi-0.2
+
+        t2 = fix_angle(20.8495559)
+        t2true = 2.+6*np.pi
+        self.assertAlmostEqual(t1, t1true)
