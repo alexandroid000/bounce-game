@@ -12,11 +12,13 @@ install the dependencies, run
 pip install -r requirements.txt
 ```
 
-Then, add the submodule:
+Then, add the submodule and install the dependencies there:
 
 ```
 git submodule init
 git submodule update
+cd bounce-viz
+pip install -r requirements.txt
 ```
 
 #### Getting Started

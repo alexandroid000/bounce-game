@@ -6,7 +6,7 @@ from matplotlib.patches import Polygon, Circle, FancyArrowPatch
 from copy import copy
 
 import sys
-sys.path.append('../bounce_viz/src/')
+sys.path.insert(0, "./bounce-viz/src/")
 from simple_polygon import Simple_Polygon
 from helper.shoot_ray_helper import ClosestPtFromPt
 from maps import small_square, poly1, bigpoly
