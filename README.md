@@ -18,3 +18,9 @@ Then, add the submodule:
 git submodule init
 git submodule update
 ```
+
+#### Getting Started
+
+Run `python game.py` to start the interactive visualization. A new window should
+open with an environment. Move the sliders to change the robot's start position
+and bounce angle, and use the buttons to change bounce rule definitions.
