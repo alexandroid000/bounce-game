@@ -54,7 +54,7 @@ class Game(object):
 
         # Buttons
         rax = plt.axes([0.05, 0.7, 0.15, 0.15], facecolor='lightgoldenrodyellow')
-        self.radio = RadioButtons(rax, ('Fixed', 'Fixed Monotonic'))
+        self.radio = RadioButtons(rax, ('Fixed', 'Fixed Monotonic', 'Relative'))
         self.radio.on_clicked(self.brulefunc)
 
         polys = self.draw_poly(self.env)
@@ -102,6 +102,18 @@ class Game(object):
             s_on_edge = (s-outer_map[(j-1)])/(outer_map[j]-outer_map[(j-1)])
             s_pt = pts[j-1] + s_on_edge*(pts[j%n]-pts[j-1])
             return s_pt, j-1
+
+    def relative_brule(self, theta, edge_i, prev_global_theta):
+        new_global_theta = fix_angle(prev_global_theta + theta)
+        pt1 = self.env.complete_vertex_list[edge_i]
+        pt2 = self.env.complete_vertex_list[(edge_i + 1) % self.env.size]
+        edge_v = pt2 - pt1
+        edge_theta = np.arctan2(edge_v[1], edge_v[0])
+        if new_global_theta > edge_theta and new_global_theta < (edge_theta + np.pi):
+            return new_global_theta
+        else:
+            return self.relative_brule(theta, edge_i, new_global_theta)
+
 
     # compute theta relative to x axis for fixed bounce rule
     def fixed_brule(self, theta, edge_i, prev_global_theta):
@@ -189,9 +201,10 @@ class Game(object):
         self.fig.canvas.draw_idle()
 
     def brulefunc(self, label):
-        bdict = {'Fixed': self.fixed_brule, 'Fixed Monotonic': self.fixed_monotonic_brule}
+        bdict = { 'Fixed': self.fixed_brule
+                , 'Fixed Monotonic': self.fixed_monotonic_brule
+                , 'Relative': self.relative_brule}
         self.brule = bdict[label]
-        print("changed brule")
         print(self.brule.__name__)
         bounces = self.make_trajectory()
 
