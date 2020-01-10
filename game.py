@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, "./bounce-viz/src/")
 from simple_polygon import Simple_Polygon
 from helper.shoot_ray_helper import ClosestPtFromPt
-from maps import small_square, poly1, bigpoly
+from maps import small_square, poly1, bigpoly, rectangle
 
 TWOPI = 2*np.pi
 EPSILON = 0.001
@@ -32,6 +32,7 @@ class Game(object):
     def __init__(self, env):
 
         self.env = env
+        self.m = len(self.env.complete_vertex_list)
         self.fig, self.ax = plt.subplots()
         self.fig.subplots_adjust(left=0.3, bottom=0.25)
 
@@ -52,6 +53,9 @@ class Game(object):
         theta_slider_ax = plt.axes([0.25, .1, 0.65, 0.03])
         self.slide_theta = Slider(theta_slider_ax, 'Theta', 0.01, 3.14, valinit=initial_amp)
 
+        alpha_slider_ax = plt.axes([0.25, .05, 0.65, 0.03])
+        self.slide_alpha = Slider(alpha_slider_ax, 'Alpha', 0.01, 3.14, valinit=initial_amp)
+
         # Buttons
         rax = plt.axes([0.05, 0.7, 0.15, 0.15], facecolor='lightgoldenrodyellow')
         self.radio = RadioButtons(rax, ('Fixed', 'Fixed Monotonic', 'Relative'))
@@ -63,9 +67,10 @@ class Game(object):
         self.ax.add_patch(self.p)
 
         self.s = 0.
-        self.theta = np.pi/2
+        self.theta = 0.
+        self.alpha = 0.
         self.brule = self.fixed_brule
-        self.n = 20
+        self.n = 40
 
 
     def draw_poly(self, poly):
@@ -150,28 +155,34 @@ class Game(object):
 
     # theta defined relative to tangent. right pointing tangent theta = 0
     # normal theta = pi/2
-    def do_bounce(self, pt, edge_i, theta, prev_global_theta, brule):
-        global_theta = brule(theta, edge_i, prev_global_theta)
-        state = (pt[0], pt[1], global_theta)
+    def do_bounce(self, pt, edge_i, heading):
+        state = (pt[0], pt[1], heading)
         ret = ClosestPtFromPt(state, self.env, last_bounce_edge=edge_i)
         if ret:
             bounce_point, bounce_edge = ret
-            return bounce_point, bounce_edge, global_theta
+            return bounce_point, bounce_edge
         else:
             raise ValueError("bounce failed!")
 
     def make_trajectory(self):
         start_pt, j = self.s_to_point(self.s)
         pts = [start_pt]
-        global_theta = self.theta
+        start_edge = [self.env.complete_vertex_list[j], self.env.complete_vertex_list[(j+1) % self.env.size]]
+        edge_vec = start_edge[1] - start_edge[0]
+        global_theta = np.arctan2(edge_vec[1], edge_vec[0]) + self.alpha
+        next_pt, next_edge = self.do_bounce(start_pt,
+                                            j,
+                                            global_theta)
+
+        pts.append(next_pt)
+        start_pt = next_pt
+        j = next_edge
 
         for i in range(self.n):
-            next_pt, next_edge, next_global_theta = self.do_bounce(
-                                                    start_pt,
-                                                    j,
-                                                    self.theta,
-                                                    global_theta,
-                                                    self.brule)
+            next_global_theta = self.brule(self.theta, j, global_theta)
+            next_pt, next_edge = self.do_bounce(start_pt,
+                                                j,
+                                                next_global_theta)
             pts.append(next_pt)
             start_pt = next_pt
             j = next_edge
@@ -188,9 +199,11 @@ class Game(object):
             self.ax.add_patch(a)
 
     def update(self, val):
-        # amp is the current value of the slider
+        # grab current values of the slider
         self.s = self.slide_s.val
         self.theta = self.slide_theta.val
+        self.alpha = self.slide_alpha.val
+
         start_pt, j = self.s_to_point(self.s)
         bounces = self.make_trajectory()
 
@@ -205,25 +218,26 @@ class Game(object):
                 , 'Fixed Monotonic': self.fixed_monotonic_brule
                 , 'Relative': self.relative_brule}
         self.brule = bdict[label]
-        print(self.brule.__name__)
-        bounces = self.make_trajectory()
-
-        [p.remove() for p in reversed(self.ax.patches[2:])]
-        self.draw_bounces(bounces)
-        # redraw canvas while idle
-        self.fig.canvas.draw_idle()
+#        print(self.brule.__name__)
+#        bounces = self.make_trajectory()
+#
+#        [p.remove() for p in reversed(self.ax.patches[2:])]
+#        self.draw_bounces(bounces)
+#        # redraw canvas while idle
+#        self.fig.canvas.draw_idle()
 
     def run(self):
         # call update function on slider value change
         self.slide_s.on_changed(self.update)
         self.slide_theta.on_changed(self.update)
+        self.slide_alpha.on_changed(self.update)
 
         plt.show()
 
 if __name__ == '__main__':
 
 
-    env = Simple_Polygon("env", poly1[0], poly1[1:])
+    env = Simple_Polygon("env", rectangle[0], rectangle[1:])
 
     g = Game(env)
     g.run()
