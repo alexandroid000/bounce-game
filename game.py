@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, "./bounce-viz/src/")
 from simple_polygon import Simple_Polygon
 from helper.shoot_ray_helper import ClosestPtFromPt
-from maps import small_square, poly1, bigpoly, rectangle
+from maps import small_square, poly1, poly2, poly3, bigpoly, rectangle
 
 TWOPI = 2*np.pi
 EPSILON = 0.001
@@ -35,6 +35,7 @@ class Game(object):
         self.m = len(self.env.complete_vertex_list)
         self.fig, self.ax = plt.subplots()
         self.fig.subplots_adjust(left=0.3, bottom=0.25)
+        self.ax.set_aspect('equal')
 
         initial_amp = 0.01
         xs = [x for (x,y) in self.env.complete_vertex_list]
@@ -70,7 +71,7 @@ class Game(object):
         self.theta = 0.
         self.alpha = 0.
         self.brule = self.fixed_brule
-        self.n = 40
+        self.n = 60
 
 
     def draw_poly(self, poly):
@@ -194,14 +195,18 @@ class Game(object):
         self.p.center = traj[0][0], traj[0][1]
         bounces = zip(traj, traj[1:])
 
+        transparency = 0.1
+
         for (pt1, pt2) in bounces:
-            a = FancyArrowPatch(posA = pt1, posB = pt2, arrowstyle="-")
+            transparency += 0.9/self.n
+            a = FancyArrowPatch(posA = pt1, posB = pt2, arrowstyle="-", alpha=transparency)
             self.ax.add_patch(a)
 
     def update(self, val):
         # grab current values of the slider
         self.s = self.slide_s.val
         self.theta = self.slide_theta.val
+        #self.theta = 2.*np.pi/3.
         self.alpha = self.slide_alpha.val
 
         start_pt, j = self.s_to_point(self.s)
@@ -237,7 +242,7 @@ class Game(object):
 if __name__ == '__main__':
 
 
-    env = Simple_Polygon("env", rectangle[0], rectangle[1:])
+    env = Simple_Polygon("env", poly3[0], poly3[1:])
 
     g = Game(env)
     g.run()
